@@ -1,15 +1,22 @@
 //Importa a biblioteca express
-import express, {Request,Response} from "express";
+import express from "express";
+//Importa a metadata
+import "reflect-metadata";
+//Importa variáveis de ambiente
+import dotenv from "dotenv";
+dotenv.config();
 
 //Cria a aplicação express
 const app = express();
 
-//Cria a rota GET principal
-app.get("/",(req, res)=>{
-    res.send("Bem-Vindo Pessoal!")
-});
+//Incluir as controllers
+import login from "./controllers/login";
+
+
+//Criar as rotas, quando chama barra, ela vai ser direcionada para a tela de login
+app.use('/', login);
 
 //Inicia o servidor na porta 8080
-app.listen(8080, () =>{
-    console.log("Servidor iniciado na porta 8080: http://localhost:8080")
+app.listen(process.env.PORT, () =>{
+    console.log(`Servidor iniciado na porta ${process.env.PORT}: http://localhost:${process.env.PORT}`)
 });

@@ -10,15 +10,20 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "watch": "tsc --watch",
-    "start:watch": "concurrently \"npm run watch\" \"node dist/index.js\"",
+    "start:watch": "concurrently \"npm run watch\" \"node --watch dist/index.js\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "dependencies": {
-    "express": "^5.2.1"
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "mysql2": "^3.24.2",
+    "reflect-metadata": "^0.2.2",
+    "typeorm": "^1.1.0"
   },
   "devDependencies": {
+    "@types/dotenv": "^6.1.1",
     "@types/express": "^5.0.6",
-    "@types/node": "^22.15.2",
+    "@types/node": "^22.20.1",
     "concurrently": "^10.0.5",
     "ts-node": "^10.9.2"
   }
