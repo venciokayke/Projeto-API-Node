@@ -1,5 +1,8 @@
 import "reflect-metadata"
+import dotenv from "dotenv";
 import { DataSource } from "typeorm";
+
+dotenv.config();
 
 const dialect = process.env.DB_DIALECT ?? "mysql"
 
@@ -14,5 +17,5 @@ export const AppDataSource = new DataSource({
     logging: true,
     entities: [],
     subscribers: [],
-    migrations: [],
+    migrations: [__dirname + "/migration/*.js"],
 })

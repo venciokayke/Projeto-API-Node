@@ -13,7 +13,7 @@ export class User {
     email!: string;
 
     @ManyToOne(() => Situation, (situation) => situation.users)
-    @JoinColumn({ name: "situationid" })
+    @JoinColumn({ name: "situationId" })
     situation!: Situation; 
 
     @Column({type: "timestamp", default: () => "CURRENT_TIMESTAMP"})
