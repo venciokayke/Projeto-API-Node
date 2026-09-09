@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, OneToMany } from "typeorm"
+import { Entity, PrimaryGeneratedColumn, Column, OneToMany, Unique } from "typeorm"
 import { User } from "./Users";
 
 @Entity("situations")
@@ -6,8 +6,8 @@ export class Situation {
     @PrimaryGeneratedColumn()
     id!: number;
 
-    @Column()
-    nameSituatiuon!: string;
+    @Column({unique: true})
+    nameSituation!: string;
 
     @Column({type: "timestamp", default: () => "CURRENT_TIMESTAMP"})
     createdAt!: Date;

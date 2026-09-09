@@ -23,7 +23,7 @@ export class CreateUsersTable1788399709952 implements MigrationInterface {
                     isUnique: true
                 },
                 {
-                    name: "SituationId",
+                    name: "situationId",
                     type: "int"
                 },
                 { 
