@@ -85,5 +85,44 @@ router.post("/situations", async(req: Request, res: Response)=>{
 
 });
 
+//Rota PUT para editar um registro em específico, utilizando o ID.
+router.put("/situations/:id", async(req: Request, res: Response)=>{
+    try{
+
+        const { id } = req.params;
+
+        var data = req.body;
+
+        const situationRepository = AppDataSource.getRepository(Situation);
+        
+        const situation = await situationRepository.findOneBy({id : parseInt(id)});
+
+        if(!situation){
+            res.status(404).json({
+                message : "A situação que você buscou não existe!"
+            });
+            return
+        }
+        //Atualzia os dados
+        situationRepository.merge(situation, data);
+
+        //Salvar as alterações de dados
+        const updateSituation = await situationRepository.save(situation);
+
+        res.status(201).json({
+            message : "Situação atualizada com sucesso!",
+            situation: updateSituation
+        });
+        
+    } catch (error) {
+        
+        res.status(500).json({
+            message : "Erro ao atualizar situação!"
+        });
+        return
+
+    }
+});
+
 //Exportar a instrução da rota
 export default router
