@@ -85,13 +85,11 @@ router.post("/situations", async(req: Request, res: Response)=>{
 
 });
 
-//Rota PUT para editar um registro em específico, utilizando o ID.
-router.put("/situations/:id", async(req: Request, res: Response)=>{
+//Rota DELETE para remover um registro em específico, utilizando o ID.
+router.delete("/situations/:id", async(req: Request, res: Response)=>{
     try{
 
         const { id } = req.params;
-
-        var data = req.body;
 
         const situationRepository = AppDataSource.getRepository(Situation);
         
@@ -103,21 +101,19 @@ router.put("/situations/:id", async(req: Request, res: Response)=>{
             });
             return
         }
-        //Atualzia os dados
-        situationRepository.merge(situation, data);
 
-        //Salvar as alterações de dados
-        const updateSituation = await situationRepository.save(situation);
+        //Remove os dados
+        await situationRepository.remove(situation);
 
-        res.status(201).json({
-            message : "Situação atualizada com sucesso!",
-            situation: updateSituation
+        res.status(200).json({
+            message : "Situação removida com sucesso!",
         });
+        return
         
     } catch (error) {
         
         res.status(500).json({
-            message : "Erro ao atualizar situação!"
+            message : "Erro ao remover situação!"
         });
         return
 
