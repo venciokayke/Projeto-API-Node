@@ -11,10 +11,50 @@ router.get("/situations", async(req: Request, res: Response)=>{
     try{
 
         const situationRepository = AppDataSource.getRepository(Situation);
-        
-        const situations = await situationRepository.find();
 
-        res.status(200).json(situations);
+        //recebe o número da página e defini a página 1 como padrão
+        const page = Number(req.query.page) || 1;
+    
+       //define o limite de registros por página
+        const limite = 1;
+
+        //Contar o total de registros no banco de dados
+        const totalSituations = await situationRepository.count();
+
+        //verifica se existem registros
+        if(totalSituations === 0){
+            res.status(400).json({
+                message : "A situação que você buscou não existe!"
+            });
+            return;
+        }
+        
+        //calcular a última página
+        const lastPage = Math.ceil(totalSituations / limite)
+
+        //Verifica se a página solicitada é válida
+        if(page > lastPage){
+            res.status(400).json({
+                message : `Página inválida, o total de páginas é ${lastPage}`
+            });
+            return;
+        }
+
+        //Calcular o offset (A partir de qual registro inicia a busca)
+        const offset = (page - 1) * limite;
+        
+        const situations = await situationRepository.find({
+            take: limite,
+            skip: offset,
+            order:{id: "DESC"}
+        });
+
+        res.status(200).json({
+            currentPage: page,
+            lastPage,
+            totalSituations,
+            situations
+        });
         return
         
     } catch (error) {
@@ -34,25 +74,25 @@ router.get("/situations/:id", async(req: Request, res: Response)=>{
         const { id } = req.params;
 
         const situationRepository = AppDataSource.getRepository(Situation);
-        
-        const situation = await situationRepository.findOneBy({id : parseInt(id)});
 
+        const situation = await situationRepository.findOneBy({id : parseInt(id)});
+   
         if(!situation){
             res.status(404).json({
                 message : "A situação que você buscou não existe!"
             });
-            return
+            return;
         }
 
         res.status(200).json(situation);
-        return
+        return;
         
     } catch (error) {
         
         res.status(500).json({
             message : "Erro ao listar situação!"
         });
-        return
+        return;
 
     }
 });
