@@ -3,6 +3,9 @@ import dotenv from "dotenv";
 import { DataSource } from "typeorm";
 import { Situation } from "./entity/Situations"
 import { User } from "./entity/Users"
+import { Product } from "./entity/Products";
+import { Product_Categories } from "./entity/Product_Categories";
+import { Product_Situations } from "./entity/Product_Situations";
 
 dotenv.config();
 
@@ -17,7 +20,7 @@ export const AppDataSource = new DataSource({
     database: process.env.DB_DATABASE,
     synchronize: false,
     logging: true,
-    entities: [Situation, User],
+    entities: [Situation, User, Product, Product_Categories, Product_Situations],
     subscribers: [],
     migrations: [__dirname + "/migration/*.js"],
 })
