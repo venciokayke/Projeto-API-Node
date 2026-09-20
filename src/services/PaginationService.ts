@@ -1,6 +1,4 @@
-import { FindOptionsOrder, ObjectLiteral, Repository } from "typeorm";
-import { NumericType } from "typeorm/driver/mongodb/typings.js";
-
+import { FindOptionsOrder, FindOptionsRelations, ObjectLiteral, Repository } from "typeorm";
 
 interface PaginationResult<T> {
     error: boolean;
@@ -15,7 +13,8 @@ export class PaginationService{
         repository:Repository<T>,
         page: number = 1,
         limite: number = 10,
-        order: FindOptionsOrder<T> = {}
+        order: FindOptionsOrder<T> = {},
+        relations: FindOptionsRelations<T> = {}
     ): Promise<PaginationResult<T>>{
 
         const totalRecords = await repository.count();
@@ -32,6 +31,7 @@ export class PaginationService{
             take: limite,
             skip: offset,
             order,
+            relations,
         });
 
         return{

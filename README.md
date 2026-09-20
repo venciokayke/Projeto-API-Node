@@ -177,3 +177,7 @@ Instalar os tipos do nodemailer.
 ```
 npm install --save-dev @types/nodemailer
 ```
+
+Executar as seeds
+```
+node dist/run-seeds.js

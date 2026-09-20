@@ -15,11 +15,12 @@ app.use(express.json());
 //Incluir as controllers
 import AuthController from "./controllers/AuthController";
 import SituationsController from "./controllers/SituationsController";
-
+import UsersController from "./controllers/UsersController"
 
 //Criar as rotas, quando chama barra, ela vai ser direcionada para a tela de login
 app.use('/', AuthController);
 app.use('/', SituationsController);
+app.use('/', UsersController)
 
 //Inicia o servidor na porta 8080
 app.listen(process.env.PORT, () =>{

@@ -39,10 +39,18 @@ router.get("/situations/:id", async(req: Request, res: Response)=>{
     try{
 
         const { id } = req.params;
+        const situationId = Number(id);
+
+        if(!Number.isFinite(situationId)){
+            res.status(400).json({
+                message: "ID inválido!"
+            });
+            return;
+        }
 
         const situationRepository = AppDataSource.getRepository(Situation);
 
-        const situation = await situationRepository.findOneBy({id : parseInt(id)});
+        const situation = await situationRepository.findOneBy({id : situationId});
    
         if(!situation){
             res.status(404).json({
@@ -92,15 +100,71 @@ router.post("/situations", async(req: Request, res: Response)=>{
 
 });
 
+//Rota PUT para atualizar um registro em específico, utilizando o ID.
+router.put("/situations/:id", async(req: Request, res: Response)=>{
+    try{
+
+        const { id } = req.params;
+        const situationId = Number(id);
+
+        if(!Number.isFinite(situationId)){
+            res.status(400).json({
+                message: "ID inválido!"
+            });
+            return;
+        }
+
+        const situationRepository = AppDataSource.getRepository(Situation);
+        const situation = await situationRepository.findOneBy({ id: situationId });
+
+        if(!situation){
+            res.status(404).json({
+                message : "A situação que você buscou não existe!"
+            });
+            return;
+        }
+
+        const { nameSituation } = req.body;
+
+        if(nameSituation !== undefined){
+            situation.nameSituation = nameSituation;
+        }
+
+        const updatedSituation = await situationRepository.save(situation);
+
+        res.status(200).json({
+            message : "Situação atualizada com sucesso!",
+            situation: updatedSituation,
+        });
+        return;
+        
+    } catch (error) {
+        
+        res.status(500).json({
+            message : "Erro ao atualizar situação!"
+        });
+        return;
+
+    }
+});
+
 //Rota DELETE para remover um registro em específico, utilizando o ID.
 router.delete("/situations/:id", async(req: Request, res: Response)=>{
     try{
 
         const { id } = req.params;
+        const situationId = Number(id);
+
+        if(!Number.isFinite(situationId)){
+            res.status(400).json({
+                message: "ID inválido!"
+            });
+            return;
+        }
 
         const situationRepository = AppDataSource.getRepository(Situation);
         
-        const situation = await situationRepository.findOneBy({id : parseInt(id)});
+        const situation = await situationRepository.findOneBy({id : situationId});
 
         if(!situation){
             res.status(404).json({
