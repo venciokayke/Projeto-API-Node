@@ -2,6 +2,7 @@
 import express, {Request,Response} from "express";
 import { AppDataSource } from "../data-source";
 import { Situation } from "../entity/Situations";
+import { PaginationService } from "../services/PaginationService";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -16,45 +17,11 @@ router.get("/situations", async(req: Request, res: Response)=>{
         const page = Number(req.query.page) || 1;
     
        //define o limite de registros por página
-        const limite = 1;
+        const limite = Number(req.query.limite) || 10;
 
-        //Contar o total de registros no banco de dados
-        const totalSituations = await situationRepository.count();
+        const result = await PaginationService.paginate(situationRepository, page, limite, {id: "DESC"})
 
-        //verifica se existem registros
-        if(totalSituations === 0){
-            res.status(400).json({
-                message : "A situação que você buscou não existe!"
-            });
-            return;
-        }
-        
-        //calcular a última página
-        const lastPage = Math.ceil(totalSituations / limite)
-
-        //Verifica se a página solicitada é válida
-        if(page > lastPage){
-            res.status(400).json({
-                message : `Página inválida, o total de páginas é ${lastPage}`
-            });
-            return;
-        }
-
-        //Calcular o offset (A partir de qual registro inicia a busca)
-        const offset = (page - 1) * limite;
-        
-        const situations = await situationRepository.find({
-            take: limite,
-            skip: offset,
-            order:{id: "DESC"}
-        });
-
-        res.status(200).json({
-            currentPage: page,
-            lastPage,
-            totalSituations,
-            situations
-        });
+        res.status(200).json(result);
         return
         
     } catch (error) {
