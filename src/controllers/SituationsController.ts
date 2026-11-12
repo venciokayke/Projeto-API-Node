@@ -4,6 +4,7 @@ import { AppDataSource } from "../data-source";
 import { Situation } from "../entity/Situations";
 import { PaginationService } from "../services/PaginationService";
 import * as yup from 'yup';
+import { Not } from "typeorm";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -89,6 +90,17 @@ router.post("/situations", async(req: Request, res: Response)=>{
         await schema.validate(data, {abortEarly: false});
 
         const situationRepository = AppDataSource.getRepository(Situation);
+
+        const existingSitutation = await situationRepository.findOne({
+            where : {nameSituation: data.nameSituation}
+        });
+
+        if(existingSitutation) { 
+                res.status(400).json({
+                    message: "Já existe uma situação cadastrada com esse nome."
+                });
+                return;
+        };
         
         const newSituation = situationRepository.create(data);
         
@@ -121,7 +133,8 @@ router.put("/situations/:id", async(req: Request, res: Response)=>{
     try{
 
         const { id } = req.params;
-        const situationId = Number(id);
+        const routeId = Array.isArray(id) ? id[0] : id;
+        const situationId = Number(routeId);
         var data = req.body;
 
         const schema = yup.object().shape({
@@ -140,6 +153,24 @@ router.put("/situations/:id", async(req: Request, res: Response)=>{
         }
 
         const situationRepository = AppDataSource.getRepository(Situation);
+
+        const existingSitutation = await situationRepository.findOne({
+            where : {
+                nameSituation: data.nameSituation,
+                id: Not(Number(routeId))
+            },
+            
+        });
+
+        if(existingSitutation) { 
+                res.status(400).json({
+                    message: "Já existe uma situação cadastrada com esse nome.",
+                    
+                });
+                return;
+        };
+        
+
         const situation = await situationRepository.findOneBy({ id: situationId });
 
         if(!situation){
