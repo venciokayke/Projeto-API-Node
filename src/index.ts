@@ -4,21 +4,30 @@ import express from "express";
 import "reflect-metadata";
 //Importa variáveis de ambiente
 import dotenv from "dotenv";
+//Importar a biblioteca para permitir conexão externa
+import cors from 'cors';
+
 dotenv.config();
 
 //Cria a aplicação express
 const app = express();
 
+
+
 //Cria um middleware para receber os dados no corpo da requisição
 app.use(express.json());
+
+//Cria o middleware para permitir requisição externa
+app.use(cors());
 
 //Incluir as controllers
 import AuthController from "./controllers/AuthController";
 import SituationsController from "./controllers/SituationsController";
-import UsersController from "./controllers/UsersController"
-import ProductSituationsController from "./controllers/ProductSituationsController"
-import ProductCategoriesController from "./controllers/ProductCategoriesController"
-import ProductController from "./controllers/ProductsController"
+import UsersController from "./controllers/UsersController";
+import ProductSituationsController from "./controllers/ProductSituationsController";
+import ProductCategoriesController from "./controllers/ProductCategoriesController";
+import ProductController from "./controllers/ProductsController";
+import TestConnectionController from "./controllers/TestConnectionController";
 
 //Criar as rotas, quando chama barra, ela vai ser direcionada para a tela de login
 app.use('/', AuthController);
@@ -27,6 +36,7 @@ app.use('/', UsersController);
 app.use('/', ProductSituationsController);
 app.use('/', ProductCategoriesController);
 app.use('/', ProductController);
+app.use('/', TestConnectionController);
 
 //Inicia o servidor na porta 8080
 app.listen(process.env.PORT, () =>{

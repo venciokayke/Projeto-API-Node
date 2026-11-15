@@ -1,5 +1,7 @@
 //Importa a biblioteca express
 import express, {Request,Response} from "express";
+import * as yup from "yup";
+import { Not } from "typeorm";
 import { AppDataSource } from "../data-source";
 import { Product_Situations } from "../entity/Product_Situations";
 import { Product_Categories } from "../entity/Product_Categories"
@@ -82,16 +84,32 @@ router.post("/products", async(req: Request, res: Response)=>{
     
     try{
 
-        const { name, categoryId, situationId } = req.body;
+        const data = req.body;
 
-        if(!name || !categoryId || !situationId){
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            categoryId: yup.number().required("O campo categoria é obrigatório."),
+            situationId: yup.number().required("O campo situação é obrigatório."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
+
+        const { name, categoryId, situationId } = data;
+
+        const productRepository = AppDataSource.getRepository(Product);
+
+        const existingRecord = await productRepository.findOne({
+            where: {
+                name: data.name,
+            }
+        });
+
+        if(existingRecord){
             res.status(400).json({
-                message: "Nome, categoria e situação são obrigatórios!"
+                message: "Já existe um produto cadastrado com esse nome."
             });
             return;
         }
-
-        const productRepository = AppDataSource.getRepository(Product);
         const productSituationRepository = AppDataSource.getRepository(Product_Situations);
         const productCategoryRepository = AppDataSource.getRepository(Product_Categories);
 
@@ -128,6 +146,13 @@ router.post("/products", async(req: Request, res: Response)=>{
         return;
 
     }catch(error){
+        if(error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
 
         res.status(500).json({
             message : "Erro ao cadastrar produto!"
@@ -144,6 +169,15 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
 
         const { id } = req.params;
         const productId = Number(id);
+        const data = req.body;
+
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            categoryId: yup.number().required("O campo categoria é obrigatório."),
+            situationId: yup.number().required("O campo situação é obrigatório."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
 
         if(!Number.isFinite(productId)){
             res.status(400).json({
@@ -153,6 +187,20 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
         }
 
         const productRepository = AppDataSource.getRepository(Product);
+
+        const existingRecord = await productRepository.findOne({
+            where: {
+                name: data.name,
+                id: Not(productId),
+            }
+        });
+
+        if(existingRecord){
+            res.status(400).json({
+                message: "Já existe um produto cadastrado com esse nome."
+            });
+            return;
+        }
         const situationRepository = AppDataSource.getRepository(Product_Situations);
         const productCategoryRepository = AppDataSource.getRepository(Product_Categories);
 
@@ -207,6 +255,13 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
         return;
         
     } catch (error) {
+        if(error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
         
         res.status(500).json({
             message : "Erro ao atualizar produto!"

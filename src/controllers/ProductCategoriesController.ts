@@ -1,5 +1,7 @@
 //Importa a biblioteca express
 import express, {Request,Response} from "express";
+import * as yup from "yup";
+import { Not } from "typeorm";
 import { AppDataSource } from "../data-source";
 import { Product_Categories } from "../entity/Product_Categories";
 import { PaginationService } from "../services/PaginationService";
@@ -79,7 +81,26 @@ router.post("/product-categories", async(req: Request, res: Response)=>{
 
         var data = req.body;
 
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
+
         const productCategoryRepository = AppDataSource.getRepository(Product_Categories);
+
+        const existingRecord = await productCategoryRepository.findOne({
+            where: {
+                name: data.name,
+            }
+        });
+
+        if(existingRecord){
+            res.status(400).json({
+                message: "Já existe uma categoria cadastrada com esse nome."
+            });
+            return;
+        }
         
         const newSituation = productCategoryRepository.create(data);
         
@@ -91,6 +112,13 @@ router.post("/product-categories", async(req: Request, res: Response)=>{
         });
 
     }catch(error){
+        if(error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
 
         res.status(500).json({
             message : "Erro ao cadastrar categoria!"
@@ -106,6 +134,13 @@ router.put("/product-categories/:id", async(req: Request, res: Response)=>{
 
         const { id } = req.params;
         const categoryId = Number(id);
+        const data = req.body;
+
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
 
         if(!Number.isFinite(categoryId)){
             res.status(400).json({
@@ -115,6 +150,20 @@ router.put("/product-categories/:id", async(req: Request, res: Response)=>{
         }
 
         const productCategoryRepository = AppDataSource.getRepository(Product_Categories);
+
+        const existingRecord = await productCategoryRepository.findOne({
+            where: {
+                name: data.name,
+                id: Not(categoryId),
+            }
+        });
+
+        if(existingRecord){
+            res.status(400).json({
+                message: "Já existe uma categoria cadastrada com esse nome."
+            });
+            return;
+        }
         const category = await productCategoryRepository.findOneBy({ id: categoryId });
 
         if(!category){
@@ -139,6 +188,13 @@ router.put("/product-categories/:id", async(req: Request, res: Response)=>{
         return;
         
     } catch (error) {
+        if(error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
         
         res.status(500).json({
             message : "Erro ao atualizar categoria!"

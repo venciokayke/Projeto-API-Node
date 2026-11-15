@@ -1,9 +1,11 @@
 //Importa a biblioteca express
 import express, {Request,Response} from "express";
+import * as yup from "yup";
 import { AppDataSource } from "../data-source";
 import { Situation } from "../entity/Situations";
 import { User } from "../entity/Users";
 import { PaginationService } from "../services/PaginationService";
+import { Not } from "typeorm";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -81,19 +83,24 @@ router.post("/users", async(req: Request, res: Response)=>{
     
     try{
 
-        const { name, email, situationId } = req.body;
+        const data = req.body;
 
-        if(!name || !email || !situationId){
-            res.status(400).json({
-                message: "Nome, e-mail e situação são obrigatórios!"
-            });
-            return;
-        }
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            email: yup.string().email("E-mail inválido.").required("O campo e-mail é obrigatório."),
+            situation: yup.number().required("O campo situação é obrigatório."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
 
         const userRepository = AppDataSource.getRepository(User);
         const situationRepository = AppDataSource.getRepository(Situation);
 
-        const situation = await situationRepository.findOneBy({id: Number(situationId)});
+        const existingUser = await userRepository.findOne({
+            where: {email: data.email}
+        });
+
+        const situation = await situationRepository.findOneBy({ id: Number(data.situation) });
 
         if(!situation){
             res.status(404).json({
@@ -101,13 +108,20 @@ router.post("/users", async(req: Request, res: Response)=>{
             });
             return;
         }
-        
+
+        if(existingUser){
+            res.status(400).json({
+                message: "Já existe um usuário cadastrado com esse e-mail.",
+            });
+            return;
+        }
+
         const newUser = userRepository.create({
-            name,
-            email,
+            name: data.name,
+            email: data.email,
             situation,
         });
-        
+
         await userRepository.save(newUser);
 
         res.status(201).json({
@@ -117,7 +131,13 @@ router.post("/users", async(req: Request, res: Response)=>{
         return;
 
     }catch(error){
-
+        if (error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+        
         res.status(500).json({
             message : "Erro ao cadastrar usuário!"
         });
@@ -132,8 +152,17 @@ router.put("/users/:id", async(req: Request, res: Response)=>{
     try{
 
         const { id } = req.params;
+        const data = req.body;
         const userId = Number(id);
 
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            email: yup.string().email("E-mail inválido.").required("O campo e-mail é obrigatório."),
+            situation: yup.number().required("O campo situação é obrigatório."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
+        
         if(!Number.isFinite(userId)){
             res.status(400).json({
                 message: "ID inválido!"
@@ -144,6 +173,20 @@ router.put("/users/:id", async(req: Request, res: Response)=>{
         const userRepository = AppDataSource.getRepository(User);
         const situationRepository = AppDataSource.getRepository(Situation);
 
+        const existingUser = await userRepository.findOne({
+            where: {
+                email: data.email,
+                id: Not(userId),
+            }
+        });
+
+        if(existingUser){
+            res.status(400).json({
+                message: "Já existe um usuário cadastrado com esse e-mail ou id.",
+            });
+            return;
+        }
+        
         const user = await userRepository.findOne({
             where: { id: userId },
             relations: { situation: true }
@@ -183,7 +226,13 @@ router.put("/users/:id", async(req: Request, res: Response)=>{
         return;
         
     } catch (error) {
-        
+        if (error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
         res.status(500).json({
             message : "Erro ao atualizar usuário!"
         });
