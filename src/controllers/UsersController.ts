@@ -6,6 +6,7 @@ import { Situation } from "../entity/Situations";
 import { User } from "../entity/Users";
 import { PaginationService } from "../services/PaginationService";
 import { Not } from "typeorm";
+import bcrypt from "bcryptjs";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -117,12 +118,14 @@ router.post("/users", async(req: Request, res: Response)=>{
             return;
         }
 
+        data.password = await bcrypt.hash(data.password, 10)
+
         const newUser = userRepository.create({
             name: data.name,
             email: data.email,
+            password: data.password,
             situation,
         });
-
         await userRepository.save(newUser);
 
         res.status(201).json({
@@ -222,6 +225,67 @@ router.put("/users/:id", async(req: Request, res: Response)=>{
 
         res.status(200).json({
             message : "Usuário atualizado com sucesso!",
+            user: userUpdated,
+        });
+        return;
+        
+    } catch (error) {
+        if (error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
+        res.status(500).json({
+            message : "Erro ao atualizar usuário!"
+        });
+        return;
+
+    }
+});
+
+router.put("/users-password/:id", async(req: Request, res: Response)=>{
+    try{
+
+        const { id } = req.params;
+        const data = req.body;
+        const userId = Number(id);
+
+        const schema = yup.object().shape({
+            password: yup.string().required("O campo de senha é obrigatório.").min(6, "A senha deve ter pelo menos 6 caracteres."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
+        
+        if(!Number.isFinite(userId)){
+            res.status(400).json({
+                message: "ID inválido!"
+            });
+            return;
+        }
+
+        const userRepository = AppDataSource.getRepository(User);         
+                
+        const user = await userRepository.findOne({
+            where: { id: userId },
+        });
+
+        if(!user){
+            res.status(404).json({
+                message : "O usuário que você buscou não existe!"
+            });
+            return;
+        }
+
+        data.password = await bcrypt.hash(data.password, 10);
+
+        await userRepository.merge(user, data);
+
+        const userUpdated = await userRepository.save(user);
+
+        res.status(200).json({
+            message : "Senha do usuário atualizada com sucesso!",
             user: userUpdated,
         });
         return;
