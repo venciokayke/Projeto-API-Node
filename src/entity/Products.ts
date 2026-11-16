@@ -10,6 +10,9 @@ export class Product {
     @Column()
     name!: string;
 
+    @Column({ unique: true })
+    slug!: string;
+
     @ManyToOne(() => Product_Situations, (product_situation) => product_situation.products)
     @JoinColumn({ name: "situationId" })
     productSituation!: Product_Situations;

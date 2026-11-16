@@ -29,16 +29,19 @@ export default class CreateUsersSeeds {
             {
                 name: "Kayke Vêncio",
                 email: "kayke@email.com",
+                password: "123456",
                 situation: situations[0]
             },
             {
                 name: "Luiza Vêncio",
                 email: "luiza@email.com",
+                password: "123456",
                 situation: situations[2] || situations[0]
             },
             {
                 name: "Sidine Vêncio",
                 email: "sidine@email.com",
+                password: "123456",
                 situation: situations[1] || situations[0]
             }
         ]

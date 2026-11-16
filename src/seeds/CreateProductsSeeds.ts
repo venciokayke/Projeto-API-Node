@@ -36,16 +36,19 @@ export default class CreateProductsSeeds {
         const products = [
             {
                 name: "RTX 5090",
+                slug: "RTX 5090",
                 productSituation: situations[0],
                 productCategory: categories[0]
             },
             {
                 name: "Caderno 10 Matérias Tilibra",
+                slug: "Caderno 10 Matérias Tilibra",
                 productSituation: situations[2],
                 productCategory: categories[1]
             },
             {
                 name: "Raquete de Tênis",
+                slug: "Raquete de Tênis",
                 productSituation: situations[1],
                 productCategory: categories[2]
             }

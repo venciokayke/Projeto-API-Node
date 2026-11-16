@@ -7,6 +7,7 @@ import { Product_Situations } from "../entity/Product_Situations";
 import { Product_Categories } from "../entity/Product_Categories"
 import { Product } from "../entity/Products";
 import { PaginationService } from "../services/PaginationService";
+import slugify from "slugify";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -88,11 +89,14 @@ router.post("/products", async(req: Request, res: Response)=>{
 
         const schema = yup.object().shape({
             name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            slug: yup.string().required("O campo slug é obrigatório.").min(3, "O campo slug deve ter no mínimo 3 caracteres.").max(255, "O campo slug deve ter no mínimo 255 caracteres."),
             categoryId: yup.number().required("O campo categoria é obrigatório."),
             situationId: yup.number().required("O campo situação é obrigatório."),
         });
 
         await schema.validate(data, { abortEarly: false });
+
+        data.slug = slugify(data.slug, {lower: true, strict: true});
 
         const { name, categoryId, situationId } = data;
 
@@ -100,13 +104,13 @@ router.post("/products", async(req: Request, res: Response)=>{
 
         const existingRecord = await productRepository.findOne({
             where: {
-                name: data.name,
+                slug: data.slug,
             }
         });
 
         if(existingRecord){
             res.status(400).json({
-                message: "Já existe um produto cadastrado com esse nome."
+                message: "Já existe um produto cadastrado com esse slug."
             });
             return;
         }
@@ -173,9 +177,12 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
 
         const schema = yup.object().shape({
             name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            slug: yup.string().required("O campo slug é obrigatório.").min(3, "O campo slug deve ter no mínimo 3 caracteres.").max(255, "O campo slug deve ter no mínimo 255 caracteres."),
             categoryId: yup.number().required("O campo categoria é obrigatório."),
             situationId: yup.number().required("O campo situação é obrigatório."),
         });
+
+        data.slug = slugify(data.slug, {lower: true, strict: true});
 
         await schema.validate(data, { abortEarly: false });
 
@@ -190,14 +197,14 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
 
         const existingRecord = await productRepository.findOne({
             where: {
-                name: data.name,
+                slug: data.slug,
                 id: Not(productId),
             }
         });
 
         if(existingRecord){
             res.status(400).json({
-                message: "Já existe um produto cadastrado com esse nome."
+                message: "Já existe um produto cadastrado com esse slug."
             });
             return;
         }
