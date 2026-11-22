@@ -7,12 +7,13 @@ import { User } from "../entity/Users";
 import { PaginationService } from "../services/PaginationService";
 import { Not } from "typeorm";
 import bcrypt from "bcryptjs";
+import {verifyToken} from "../middleware/authMiddleware"
 
 //Cria a aplicação express
 const router = express.Router();
 
 //Cria a rota GET principal
-router.get("/users", async(req: Request, res: Response)=>{
+router.get("/users", verifyToken, async(req: Request, res: Response)=>{
     try{
 
         const userRepository = AppDataSource.getRepository(User);
