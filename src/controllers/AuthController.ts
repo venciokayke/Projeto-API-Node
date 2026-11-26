@@ -6,6 +6,8 @@ import { AppDataSource } from "../data-source";
 import { User } from "../entity/Users";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
+import { verifyToken } from "../middleware/authMiddleware";
+import { Situation } from "../entity/Situations";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -35,6 +37,86 @@ router.post("/", async (req:Request, res:Response)=>{
         });
         return;
     }
+});
+
+router.get("/validate-token", verifyToken, async (req:Request, res:Response)=>{
+
+    res.status(200).json({
+            message:"Token válido!",
+            userId: (req as any).user.id,
+        });
+
+});
+
+router.post("/new-users", async(req: Request, res: Response)=>{
+    
+    try{
+
+        const data = req.body;
+
+        const schema = yup.object().shape({
+            name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
+            email: yup.string().email("E-mail inválido.").required("O campo e-mail é obrigatório."),
+            password: yup.string().required("O campo de senha é obrigatório.").min(6, "A senha deve ter pelo menos 6 caracteres."),
+            situation: yup.number().required("O campo situação é obrigatório."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
+
+        const userRepository = AppDataSource.getRepository(User);
+        const situationRepository = AppDataSource.getRepository(Situation);
+
+        const existingUser = await userRepository.findOne({
+            where: {email: data.email}
+        });
+
+        const situation = await situationRepository.findOneBy({ id: Number(data.situation) });
+
+        if(!situation){
+            res.status(404).json({
+                message: "A situação informada não existe!"
+            });
+            return;
+        }
+
+        if(existingUser){
+            res.status(400).json({
+                message: "Já existe um usuário cadastrado com esse e-mail.",
+            });
+            return;
+        }
+
+        //data.password = await bcrypt.hash(data.password, 10)
+
+        const newUser = userRepository.create({
+            name: data.name,
+            email: data.email,
+            password: data.password,
+            situation,
+        });
+        await userRepository.save(newUser);
+
+        res.status(201).json({
+            message : "Usuário cadastrado com sucesso!",
+            user: newUser,
+        });
+        return;
+
+    }catch(error){
+        if (error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+        
+        res.status(500).json({
+            message : "Erro ao cadastrar usuário!"
+        });
+        return;
+
+    }
+
 });
 
 router.post("/recover-password", async (req:Request, res:Response) =>{
