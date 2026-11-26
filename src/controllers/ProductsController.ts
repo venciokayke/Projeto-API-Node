@@ -90,11 +90,13 @@ router.post("/products", async(req: Request, res: Response)=>{
         const schema = yup.object().shape({
             name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
             slug: yup.string().required("O campo slug é obrigatório.").min(3, "O campo slug deve ter no mínimo 3 caracteres.").max(255, "O campo slug deve ter no mínimo 255 caracteres."),
+            description: yup.string().nullable(),
+            price: yup.string().nullable().matches(/^\d{1,8}(\.\d{1,2})?$/, "Informe um preço válido com até duas casas decimais."),
             categoryId: yup.number().required("O campo categoria é obrigatório."),
             situationId: yup.number().required("O campo situação é obrigatório."),
         });
 
-        await schema.validate(data, { abortEarly: false });
+        const { description, price } = await schema.validate(data, { abortEarly: false });
 
         data.slug = slugify(data.slug, {lower: true, strict: true});
 
@@ -137,6 +139,9 @@ router.post("/products", async(req: Request, res: Response)=>{
         
         const newProduct = productRepository.create({
             name,
+            slug: data.slug,
+            description,
+            price,
             productCategory: category,
             productSituation: situation,
         });
@@ -178,13 +183,15 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
         const schema = yup.object().shape({
             name: yup.string().required("O campo nome é obrigatório.").min(3, "O campo nome deve ter no mínimo 3 caracteres."),
             slug: yup.string().required("O campo slug é obrigatório.").min(3, "O campo slug deve ter no mínimo 3 caracteres.").max(255, "O campo slug deve ter no mínimo 255 caracteres."),
+            description: yup.string().nullable(),
+            price: yup.string().nullable().matches(/^\d{1,8}(\.\d{1,2})?$/, "Informe um preço válido com até duas casas decimais."),
             categoryId: yup.number().required("O campo categoria é obrigatório."),
             situationId: yup.number().required("O campo situação é obrigatório."),
         });
 
         data.slug = slugify(data.slug, {lower: true, strict: true});
 
-        await schema.validate(data, { abortEarly: false });
+        const { description, price } = await schema.validate(data, { abortEarly: false });
 
         if(!Number.isFinite(productId)){
             res.status(400).json({
@@ -226,6 +233,8 @@ router.put("/products/:id", async(req: Request, res: Response)=>{
         const { name, categoryId, situationId } = req.body;
 
         if(name !== undefined) product.name = name;
+        if(description !== undefined) product.description = description;
+        if(price !== undefined) product.price = price;
 
         if(situationId !== undefined){
             const situation = await situationRepository.findOneBy({ id: Number(situationId) });

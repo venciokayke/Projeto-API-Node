@@ -13,6 +13,12 @@ export class Product {
     @Column({ unique: true })
     slug!: string;
 
+    @Column({ type: "longtext", nullable: true })
+    description!: string | null;
+
+    @Column({ type: "decimal", precision: 10, scale: 2, nullable: true })
+    price!: string | null;
+
     @ManyToOne(() => Product_Situations, (product_situation) => product_situation.products)
     @JoinColumn({ name: "situationId" })
     productSituation!: Product_Situations;

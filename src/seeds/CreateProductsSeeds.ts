@@ -37,18 +37,24 @@ export default class CreateProductsSeeds {
             {
                 name: "RTX 5090",
                 slug: "RTX 5090",
+                description: "Placa de vídeo GeForce RTX 5090.",
+                price: "15999.90",
                 productSituation: situations[0],
                 productCategory: categories[0]
             },
             {
                 name: "Caderno 10 Matérias Tilibra",
                 slug: "Caderno 10 Matérias Tilibra",
+                description: "Caderno espiral Tilibra com divisórias para 10 matérias.",
+                price: "39.90",
                 productSituation: situations[2],
                 productCategory: categories[1]
             },
             {
                 name: "Raquete de Tênis",
                 slug: "Raquete de Tênis",
+                description: "Raquete para treinos e partidas de tênis.",
+                price: "249.90",
                 productSituation: situations[1],
                 productCategory: categories[2]
             }
