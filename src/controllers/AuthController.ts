@@ -5,6 +5,7 @@ import { AuthService } from "../services/AuthService";
 import { AppDataSource } from "../data-source";
 import { User } from "../entity/Users";
 import crypto from "crypto";
+import nodemailer from "nodemailer";
 
 //Cria a aplicação express
 const router = express.Router();
@@ -44,7 +45,6 @@ router.post("/recover-password", async (req:Request, res:Response) =>{
         const schema = yup.object().shape({
             urlRecoverPassword: yup.string().required("A URL é obrigatória."),
             email: yup.string().email("E-mail inválido.").required("O campo e-mail é obrigatório."),
-            
         });
 
         await schema.validate(data, { abortEarly: false });
@@ -64,14 +64,42 @@ router.post("/recover-password", async (req:Request, res:Response) =>{
 
         await userRepository.save(user);
 
-        res.status(201).json({
-            message : "Gerado o link para recuperação da senha.",
-            urlRecoverPassword: `${data.urlRecoverPassword}?email=${data.email}&key=${user.recoverPassword}`,
-            kaye: user.recoverPassword,
+        const transport = nodemailer.createTransport({
+            host: process.env.EMAIL_HOST,
+            port: Number(process.env.EMAIL_PORT),
+            secure: false,
+            auth: {
+                user: process.env.EMAIL_USER,
+                pass: process.env.EMAIL_PASS
+            }
         });
-        return;
 
-    
+        var message_content = {
+            from: process.env.EMAIL_FROM,
+            to: data.email,
+            subject: "Recuperar Senha",
+            text: `Prezado(a) ${user.name},\n\nRecebemos sua solicitação de recuperação de senha.\n\nPara criar uma nova senha, acesse o link abaixo.\n${data.urlRecoverPassword}?email=${encodeURIComponent(data.email)}&key=${user.recoverPassword}\n\nSe você não solicitou a recuperação, pode ignorar esta mensagem.`,
+            html: `<p>Prezado(a) ${user.name.replace(/&/g, "&amp;").replace(/</g, "&lt;")},</p>
+                <p>Recebemos sua solicitação de recuperação de senha.</p>
+                <p><a href="${/^https?:\/\//i.test(data.urlRecoverPassword) ? data.urlRecoverPassword.replace(/&/g, "&amp;").replace(/"/g, "&quot;") : "#"}?email=${encodeURIComponent(data.email)}&amp;key=${user.recoverPassword}">Criar nova senha</a></p>
+                <p>Se você não solicitou a recuperação, pode ignorar esta mensagem.</p>`
+        }
+
+        transport.sendMail( message_content, function(err){
+            if (err) {
+                console.log("erro ao enviar email: ", err);
+                 res.status(500).json({
+                message: "E-mail não enviado, tente novamente!"
+            });
+            return
+            } else {
+                res.status(200).json({
+                    message : "Gerado o link para recuperação da senha. Verifique seu email!",
+                    urlRecoverPassword: `${data.urlRecoverPassword}?email=${data.email}&key=${user.recoverPassword}`
+                });
+                return;
+            }
+        });
     }catch(error: any){
        if (error instanceof yup.ValidationError){
             res.status(400).json({
