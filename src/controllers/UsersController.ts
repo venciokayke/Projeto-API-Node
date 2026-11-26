@@ -119,7 +119,7 @@ router.post("/users", async(req: Request, res: Response)=>{
             return;
         }
 
-        data.password = await bcrypt.hash(data.password, 10)
+        //data.password = await bcrypt.hash(data.password, 10)
 
         const newUser = userRepository.create({
             name: data.name,
@@ -279,7 +279,7 @@ router.put("/users-password/:id", async(req: Request, res: Response)=>{
             return;
         }
 
-        data.password = await bcrypt.hash(data.password, 10);
+        //data.password = await bcrypt.hash(data.password, 10);
 
         await userRepository.merge(user, data);
 

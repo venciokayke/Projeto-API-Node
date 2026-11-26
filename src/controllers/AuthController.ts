@@ -115,5 +115,95 @@ router.post("/recover-password", async (req:Request, res:Response) =>{
     }   
 });
 
+router.post("/validate-recover-password", async (req:Request, res:Response) =>{
+    try{
+
+        var data = req.body;
+
+        const schema = yup.object().shape({
+            recoverPassword: yup.string().required("A chave é obrigatória."),
+            email: yup.string().email("E-mail inválido.").required("O campo e-mail é obrigatório."),
+        });
+
+        await schema.validate(data, { abortEarly: false });
+
+        const userRepository = AppDataSource.getRepository(User);
+
+        const user = await userRepository.findOneBy({ email: data.email, recoverPassword: data.recoverPassword });
+
+        if(!user){
+            res.status(404).json({
+                mesage: "Chave inválida.",
+            });
+            return;
+        }
+
+        res.status(200).json({
+            message : "Chave válida.",
+        });
+        return;
+
+    }catch(error: any){
+       if (error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
+        res.status(500).json({
+            message : "Chave inválida."
+        });
+        return;
+    }   
+});
+
+router.put("/update-password", async (req:Request, res:Response) =>{
+    try{
+         var data = req.body;
+
+        const schema = yup.object().shape({
+            recoverPassword: yup.string().required("A chave é obrigatória."),
+            email: yup.string().email("E-mail inválido.").required("O campo e-mail é obrigatório."),
+            password: yup.string().required("O campo de senha é obrigatório.").min(6, "A senha deve ter pelo menos 6 caracteres."),
+        });
+
+        const { email, recoverPassword, password } = await schema.validate(data, { abortEarly: false });
+
+        const userRepository = AppDataSource.getRepository(User);
+
+        const user = await userRepository.findOneBy({ email, recoverPassword });
+
+        if(!user){
+            res.status(404).json({
+                mesage: "Chave inválida.",
+            });
+            return;
+        }
+
+        userRepository.merge(user, { password, recoverPassword: null });
+        await user.hashPassword();
+
+        await userRepository.save(user);
+
+        res.status(200).json({
+            message : "Senha atualizada com sucesso.",
+        });
+        return;
+
+    }catch(error: any){
+       if (error instanceof yup.ValidationError){
+            res.status(400).json({
+                message: error.errors
+            });
+            return;
+        }
+
+        res.status(500).json({
+            message : "Chave inválida."
+        });
+        return;
+    }   
+});
 //Exportar a instrução da rota
 export default router
